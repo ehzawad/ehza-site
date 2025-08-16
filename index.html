@@ -555,7 +555,10 @@
             let lastTouchY = 0;
             
             document.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+                // Only prevent default if not touching a clickable element
+                if (!e.target.closest('a, button, input, textarea, select')) {
+                    e.preventDefault();
+                }
                 const touch = e.touches[0];
                 touchX = touch.clientX;
                 touchY = touch.clientY;
@@ -564,7 +567,10 @@
             }, { passive: false });
             
             document.addEventListener('touchmove', (e) => {
-                e.preventDefault();
+                // Only prevent default if not touching a clickable element
+                if (!e.target.closest('a, button, input, textarea, select')) {
+                    e.preventDefault();
+                }
                 const touch = e.touches[0];
                 const prevX = touchX;
                 const prevY = touchY;
@@ -584,17 +590,20 @@
             }, { passive: false });
             
             document.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                // Create a final burst of paint on touch end
-                for (let i = 0; i < 3; i++) {
-                    setTimeout(() => {
-                        createPaintTrail(
-                            lastTouchX + (Math.random() - 0.5) * 30,
-                            lastTouchY + (Math.random() - 0.5) * 30,
-                            (Math.random() - 0.5) * 15,
-                            (Math.random() - 0.5) * 15
-                        );
-                    }, i * 30);
+                // Only prevent default if not touching a clickable element
+                if (!e.target.closest('a, button, input, textarea, select')) {
+                    e.preventDefault();
+                    // Create a final burst of paint on touch end
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(() => {
+                            createPaintTrail(
+                                lastTouchX + (Math.random() - 0.5) * 30,
+                                lastTouchY + (Math.random() - 0.5) * 30,
+                                (Math.random() - 0.5) * 15,
+                                (Math.random() - 0.5) * 15
+                            );
+                        }, i * 30);
+                    }
                 }
             }, { passive: false });
         }
