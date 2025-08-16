@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emrul Zawad - Software Engineer</title>
+    <title>Emrul Hasan Zawad - Software Engineer</title>
     <style>
         * {
             margin: 0;
@@ -385,14 +385,14 @@
         // Paint trails array
         let paintTrails = [];
         
-        // Color palette for brush effect
+        // Natural, muted color palette for brush effect
         const colors = [
-            'rgba(120, 119, 198, 0.3)',
-            'rgba(255, 119, 198, 0.3)',
-            'rgba(120, 255, 198, 0.3)',
-            'rgba(255, 215, 119, 0.3)',
-            'rgba(198, 120, 255, 0.3)',
-            'rgba(119, 255, 215, 0.3)'
+            'rgba(220, 200, 180, 0.25)',  // Warm beige
+            'rgba(200, 180, 160, 0.28)',  // Soft brown
+            'rgba(180, 160, 140, 0.32)',  // Muted taupe
+            'rgba(240, 220, 200, 0.22)',  // Light cream
+            'rgba(210, 190, 170, 0.26)',  // Dusty rose
+            'rgba(230, 210, 190, 0.24)'   // Pale gray
         ];
         
         let currentColorIndex = 0;
@@ -411,16 +411,20 @@
                 this.x = x;
                 this.y = y;
                 this.color = color;
-                this.alpha = 0.4;
-                this.radius = Math.random() * 15 + 5;
+                this.alpha = 0.25 + Math.random() * 0.15; // Lower, more varied opacity
+                this.radius = Math.random() * 15 + 5; // Smaller brush size
                 this.life = 1.0;
-                this.decay = 0.02 + Math.random() * 0.02;
+                this.decay = 0.008 + Math.random() * 0.012; // Faster fade
+                this.offsetX = (Math.random() - 0.5) * 2; // Natural drift
+                this.offsetY = (Math.random() - 0.5) * 2;
             }
 
             update() {
                 this.life -= this.decay;
-                this.alpha = this.life * 0.4;
-                this.radius *= 0.98;
+                this.alpha = this.life * (0.25 + Math.random() * 0.1); // More natural fade
+                this.radius *= 0.985; // Slower shrink for smoother effect
+                this.x += this.offsetX * 0.3; // Subtle drift movement
+                this.y += this.offsetY * 0.3;
                 return this.life > 0;
             }
 
@@ -429,14 +433,19 @@
                 
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
-                ctx.globalCompositeOperation = 'overlay';
+                ctx.globalCompositeOperation = 'source-over'; // Standard blending for visibility
                 
                 const gradient = ctx.createRadialGradient(
                     this.x, this.y, 0,
                     this.x, this.y, this.radius
                 );
                 
-                gradient.addColorStop(0, this.color.replace('0.3', this.alpha.toString()));
+                // Extract base opacity from color and make it visible
+                const baseOpacity = parseFloat(this.color.match(/[\d\.]+(?=\))/g).pop());
+                const visibleAlpha = Math.min(this.alpha * 1.5, baseOpacity * 3);
+                
+                gradient.addColorStop(0, this.color.replace(/[\d\.]+(?=\))/, visibleAlpha.toString()));
+                gradient.addColorStop(0.6, this.color.replace(/[\d\.]+(?=\))/, (visibleAlpha * 0.4).toString()));
                 gradient.addColorStop(1, 'transparent');
                 
                 ctx.fillStyle = gradient;
@@ -465,13 +474,15 @@
         // Create paint trail
         function createPaintTrail(x, y, velocityX, velocityY) {
             const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-            if (speed > 2) {
-                // Change color based on speed and direction
-                currentColorIndex = Math.floor((speed + Math.abs(velocityX) + Math.abs(velocityY)) / 10) % colors.length;
+            if (speed > 0.8) { // Lower threshold to make it more responsive
+                // Gentler color variation based on movement
+                currentColorIndex = Math.floor((speed * 0.3 + Math.abs(velocityX) * 0.2) / 8) % colors.length;
                 
-                for (let i = 0; i < Math.min(3, Math.floor(speed / 5)); i++) {
-                    const offsetX = (Math.random() - 0.5) * 20;
-                    const offsetY = (Math.random() - 0.5) * 20;
+                // More brush strokes for better visibility
+                const numStrokes = Math.min(3, Math.floor(speed / 5) + 1);
+                for (let i = 0; i < numStrokes; i++) {
+                    const offsetX = (Math.random() - 0.5) * 12; // Smaller spread
+                    const offsetY = (Math.random() - 0.5) * 12;
                     paintTrails.push(new PaintTrail(
                         x + offsetX, 
                         y + offsetY, 
@@ -483,8 +494,8 @@
 
         // Animation loop
         function animate() {
-            // Clear canvas with slight fade effect
-            ctx.fillStyle = 'rgba(26, 26, 26, 0.05)';
+            // Clear canvas with more pronounced fade for natural blending
+            ctx.fillStyle = 'rgba(26, 26, 26, 0.03)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Update and draw paint trails
@@ -536,6 +547,56 @@
             hideCursorWithDelay();
         } else {
             cursor.style.display = 'none';
+            
+            // Touch event handling for mobile devices
+            let touchX = 0;
+            let touchY = 0;
+            let lastTouchX = 0;
+            let lastTouchY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                touchX = touch.clientX;
+                touchY = touch.clientY;
+                lastTouchX = touchX;
+                lastTouchY = touchY;
+            }, { passive: false });
+            
+            document.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const prevX = touchX;
+                const prevY = touchY;
+                
+                touchX = touch.clientX;
+                touchY = touch.clientY;
+                
+                // Calculate velocity for touch movement
+                const velocityX = touchX - prevX;
+                const velocityY = touchY - prevY;
+                
+                // Create paint trail for touch movement
+                createPaintTrail(touchX, touchY, velocityX, velocityY);
+                
+                lastTouchX = touchX;
+                lastTouchY = touchY;
+            }, { passive: false });
+            
+            document.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                // Create a final burst of paint on touch end
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        createPaintTrail(
+                            lastTouchX + (Math.random() - 0.5) * 30,
+                            lastTouchY + (Math.random() - 0.5) * 30,
+                            (Math.random() - 0.5) * 15,
+                            (Math.random() - 0.5) * 15
+                        );
+                    }, i * 30);
+                }
+            }, { passive: false });
         }
 
         // Enhanced hover effects for social links
